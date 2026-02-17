@@ -1,0 +1,76 @@
+MODULE Background_Stream
+    VAR socketdev server_stream;
+    VAR socketdev client_stream;
+    VAR socketstatus status;
+    VAR jointtarget joints;
+    VAR robtarget cartesian;
+    VAR string msg;
+
+    PROC Main()
+        ! Outer loop: Handles the total lifecycle
+        WHILE TRUE DO
+            ! 1. Cleanup
+            SocketClose client_stream;
+            SocketClose server_stream;
+            WaitTime 0.5;
+
+            ! 2. Setup
+            SocketCreate server_stream;
+            SocketBind server_stream, "192.168.125.1", 5001;
+            SocketListen server_stream;
+
+            ! 3. Wait for PC
+            ! The task will pause here until your Python script connects
+            SocketAccept server_stream, client_stream;
+            TPWrite "T_BACK: Python Connected.";
+
+            ! 4. Streaming Loop
+            WHILE TRUE DO
+                ! --- SAFETY CHECK ---
+                ! Check if the socket is still valid before trying to use it
+                status := SocketGetStatus(client_stream);
+                
+                IF status = SOCKET_CONNECTED THEN
+                    joints := CJointT();
+                    cartesian := CRobT();
+
+                    ! Format: X,Y,Z | J1,J2,J3,J4,J5,J6
+                    msg := ValToStr(Round(cartesian.trans.x \Dec:=2)) + "," 
+                         + ValToStr(Round(cartesian.trans.y \Dec:=2)) + "," 
+                         + ValToStr(Round(cartesian.trans.z \Dec:=2)) + "|" 
+                         + ValToStr(Round(joints.robax.rax_1 \Dec:=2)) + "," 
+                         + ValToStr(Round(joints.robax.rax_2 \Dec:=2)) + "," 
+                         + ValToStr(Round(joints.robax.rax_3 \Dec:=2)) + "," 
+                         + ValToStr(Round(joints.robax.rax_4 \Dec:=2)) + "," 
+                         + ValToStr(Round(joints.robax.rax_5 \Dec:=2)) + "," 
+                         + ValToStr(Round(joints.robax.rax_6 \Dec:=2));
+
+                    SocketSend client_stream \Str:=msg;
+                ELSE
+                    ! If not connected, exit inner loop to trigger reset logic
+                    GOTO StartOver;
+                ENDIF
+                
+                WaitTime 0.1;
+            ENDWHILE
+            
+            StartOver:
+            ! Small delay before the WHILE loop resets everything
+            WaitTime 0.5;
+        ENDWHILE
+
+    ERROR
+        ! Catch any socket-related errors (Closed, Timeout, etc.)
+        IF ERRNO = ERR_SOCK_CLOSED OR ERRNO = ERR_EXCRTYMAX THEN
+            SocketClose client_stream;
+            SocketClose server_stream;
+            WaitTime 1.0;
+            RETRY; 
+        ELSE
+            ! For any other unexpected error, just reset the sockets and retry
+            SocketClose client_stream;
+            SocketClose server_stream;
+            RETRY;
+        ENDIF
+    ENDPROC
+ENDMODULE

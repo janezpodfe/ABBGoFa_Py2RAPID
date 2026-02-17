@@ -1,0 +1,70 @@
+MODULE Socket_Communication
+    VAR socketdev server_socket;
+    VAR socketdev client_socket;
+    VAR string received_data;
+    VAR string feedback_data;
+    VAR pos target_pos;
+    VAR jointtarget current_joints;
+    VAR robtarget current_pos;
+    VAR bool ok;
+    
+    VAR robtarget pHome := [[500,0,620],[0,0,-1,0],[-1,0,-1,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+
+    CONST num max_x := 100;
+    CONST num max_y := 100;
+    CONST num max_z := 50;
+
+    PROC Main()
+        Connect_PC;
+
+        WHILE TRUE DO
+            SocketReceive client_socket \Str:=received_data \Time:=WAIT_MAX;
+            
+            IF received_data = "EXIT" THEN
+                GOTO EndOfProgram;
+            ENDIF
+
+            ok := StrToVal(received_data, target_pos);
+            
+            IF ok THEN
+                IF Abs(target_pos.x) > max_x OR Abs(target_pos.y) > max_y OR Abs(target_pos.z) > max_z THEN
+                    SocketSend client_socket \Str:="ERROR: Out of bounds";
+                ELSE
+                    MoveL Offs(pHome, target_pos.x, target_pos.y, target_pos.z), v100, fine, tool0;
+                    
+                    ! --- FEEDBACK SECTION ---
+                    current_joints := CJointT();
+                    current_pos := CRobT();
+                    
+                    ! Format: "X,Y,Z | J1,J2,J3,J4,J5,J6"
+                    feedback_data := ValToStr(current_pos.trans.x) + "," + ValToStr(current_pos.trans.y) + "," + ValToStr(current_pos.trans.z) + "|" 
+                                   + ValToStr(current_joints.robax.rax_1) + "," + ValToStr(current_joints.robax.rax_2) + "," 
+                                   + ValToStr(current_joints.robax.rax_3) + "," + ValToStr(current_joints.robax.rax_4) + "," 
+                                   + ValToStr(current_joints.robax.rax_5) + "," + ValToStr(current_joints.robax.rax_6);
+                    
+                    SocketSend client_socket \Str:=feedback_data;
+                ENDIF
+            ELSE
+                SocketSend client_socket \Str:="ERROR: Invalid Format";
+            ENDIF
+        ENDWHILE
+
+        EndOfProgram:
+        SocketClose client_socket;
+        SocketClose server_socket;
+        
+    ERROR
+        IF ERRNO = ERR_SOCK_CLOSED THEN
+            SocketClose client_socket;
+            SocketClose server_socket;
+            TRYNEXT; 
+        ENDIF
+    ENDPROC
+
+    PROC Connect_PC()
+        SocketCreate server_socket;
+        SocketBind server_socket, "192.168.125.1", 5000;
+        SocketListen server_socket;
+        SocketAccept server_socket, client_socket;
+    ENDPROC
+ENDMODULE

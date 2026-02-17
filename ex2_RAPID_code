@@ -1,0 +1,28 @@
+MODULE Background_Stream
+    VAR socketdev stream_socket;
+    VAR jointtarget joints;
+    VAR robtarget cartesian;
+    VAR string msg;
+
+    PROC Main()
+        ! Setup connection for streaming (use a different port than your main code!)
+        SocketCreate stream_socket;
+        SocketBind stream_socket, "192.168.125.1", 5001; 
+        SocketListen stream_socket;
+        SocketAccept stream_socket;
+
+        WHILE TRUE DO
+            joints := CJointT();
+            cartesian := CRobT();
+
+            ! Package the data
+            msg := ValToStr(cartesian.trans.x) + "," + ValToStr(cartesian.trans.y) + "|" 
+                 + ValToStr(joints.robax.rax_1) + "," + ValToStr(joints.robax.rax_2);
+            
+            SocketSend stream_socket \Str:=msg;
+            
+            ! Crucial: Prevent the CPU from overloading
+            WaitTime 0.1; 
+        ENDWHILE
+    ENDPROC
+ENDMODULE
