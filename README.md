@@ -2,12 +2,38 @@
 
 # Lab Guide: Remote Control and Telemetry of ABB GoFa
 
-## 0. RobotStudio Setup
-Run RobotStudio 2025, connect to robot controller, username `admin`, password `robotics`.
+## 0. RobotStudio and Controller Setup
+
+Before executing any code, ensure the hardware and software environments are synchronized. This setup allows your PC to communicate with the ABB OmniCore controller over the standard Service Port.
+
+### Software Connection
+* **Launch RobotStudio**: Open RobotStudio 2025 and ensure your PC is physically connected to the robot controller via the Service Port (IP: `192.168.125.1`).
+* **Authentication**: Connect to the controller using the following credentials:
+    * **Username**: `admin`
+    * **Password**: `robotics`
+
+### Operating Mode Configuration
+To allow the Python scripts to take control of the motion, the robot must be placed in the correct operating state using the FlexPendant's **Control Panel**.
 
 ![How to run automatic run on controller](How_to_run_automatic_run_on_controller.png)
-![How to add 2 tasks to robot controller](How_to_add_2_tasks_to_robot_controller.PNG)
 
+
+1.  **Unlock the Controller**: Ensure the lock icon is set to "Unlocked" to allow changes to the mode.
+2.  **Switch to Auto Mode**: Select **Auto** mode. In this mode, the robot can execute the RAPID program continuously without the user holding a three-position enabling device.
+3.  **Enable Motors**: Tap **Motors on**. You should hear a distinct "click" from the controller as the brakes are released and power is supplied to the joints.
+4.  **Set Run Speed**: Ensure the **Run Speed** is set to **100%**. While the RAPID code uses internal speed instructions (e.g., `v100`), the controller-level override must be at 100% for these to execute at their programmed velocity.
+5.  **Reset Program Pointer**: Tap **Reset program (PP to main)**. This is a critical step that ensures both the Motion Task (`T_ROB1`) and Background Task (`T_BACK`) start execution from the very beginning of their respective `Main` procedures.
+
+---
+
+### Verification
+Once configured, the status bar at the top of the FlexPendant should display:
+* **Status**: `Running` (after pressing Play)
+* **Mode**: `Auto`
+* **Motors**: `On`
+* **Speed**: `100%`
+  
+  
 ## 1. Simple example (example 1)
 
 **Understanding the Command Logic (T_ROB1)**: 
@@ -60,6 +86,20 @@ The Python script acts as the **Network Master**, following a synchronous **Requ
 
 ### 1. System Overview
 This laboratory setup utilizes a **Multi-Tasking architecture** on the ABB OmniCore controller. This allows the robot to maintain a stable control loop for motion while simultaneously streaming high-frequency telemetry data to an external PC.
+
+#### Controller Configuration: Adding Parallel Tasks
+To enable simultaneous motion and data streaming in a project that only contains a motion task, you must manually configure a second task in RobotStudio.
+
+![How to add 2 tasks to robot controller](How_to_add_2_tasks_to_robot_controller.PNG)
+
+1.  **Navigate to Configuration**: Under the **Controller** tab in RobotStudio, go to **Configuration** > **Controller** > **Task**.
+2.  **Create T_BACK**: Right-click and select **New Task**. Configure it with the following parameters:
+    * **Task Name**: `T_BACK`.
+    * **Type**: **Static** (This ensures the task runs independently of the motion state).
+    * **Motion Task**: **No**.
+3.  **Verify T_ROB1**: Ensure `T_ROB1` is set as a **Normal** task type with **Motion Task** set to **Yes**.
+4.  **Load Modules**: In the **RAPID** tab, right-click the new `T_BACK` folder to load `ex3_RAPID_code_T_BACK`, and ensure `ex3_RAPID_code_T_ROB1` is loaded into `T_ROB1`.
+5.  **Warm Start**: Restart the controller to apply these configuration changes.
 
 #### Core Components:
 
