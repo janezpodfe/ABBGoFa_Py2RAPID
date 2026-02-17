@@ -79,7 +79,7 @@ This laboratory setup utilizes a **Multi-Tasking architecture** on the ABB OmniC
 | Feature | Command Port (5000) | Telemetry Port (5001) |
 | :--- | :--- | :--- |
 | **Protocol** | TCP/IP | TCP/IP |
-| **Data Format** | String: `[x, y, z]` | String: `X,Y,Z | J1,J2,J3,J4,J5,J6` |
+| **Data Format** | String: `[x, y, z]` | String: `X,Y,Z|J1,J2,J3,J4,J5,J6` |
 | **Logic** | Request / Response | Continuous Stream |
 | **Safety** | Software Bounds Applied | Read-Only |
 
@@ -108,24 +108,24 @@ To ensure synchronization between the ABB controller and the Python clients, and
 #### Phase 2: PC Side (Client Connection)
 1. **Terminal 1 (Telemetry):** Execute the listener script:
     ```bash
-    python stream_viewer2.py
+    python ex3_stream_viewer2.py
     ```
 
-   * `stream_viewer2.py`:
+   * `ex3_stream_viewer2.py`:
        * **Function:** Establishes the telemetry connection to **Port 5001**.
        * **Output:** Initializes the live dashboard for real-time monitoring and creates the `robot_telemetry_log.csv` file for data persistence.
 
 2. **Terminal 2 (Control):** Execute the commander script:
     ```bash
-    python testsocket2.py
+    python ex3_testsocket2.py
     ```
 
-   * `testsocket2.py`:
+   * `ex3_testsocket2.py`:
        * **Function:** Establishes the command connection to **Port 5000**.
        * **Output:** Opens the interactive command console, allowing the user to send `[x, y, z]` movement vectors to the GoFa.
 
 > #### ⚠️ Critical Operational Note
-> **Connection Reset Logic:** > If you stop the Python scripts, the robot's sockets may remain in a "half-open" state. To ensure the sockets are properly released and re-bound:
+> **Connection Reset Logic:** If you stop the Python scripts, the robot's sockets may remain in a "half-open" state. To ensure the sockets are properly released and re-bound:
 > 1. Stop the Robot program via the FlexPendant.
 > 2. Reset the **Program Pointer (PP to Main)** for both tasks.
 > 3. Restart the Robot program **before** restarting the Python clients.
@@ -161,7 +161,7 @@ If you encounter issues during the lab, refer to the following table to diagnose
 | Error / Symptom | Probable Cause | Solution |
 | :--- | :--- | :--- |
 | **Timeout Error** | Robot server not responding or unreachable. | 1. Check if the FlexPendant **Play** button is active (Green).<br>2. Verify the PC is connected to the Service Port and the IP `192.168.125.1` is correct. |
-| **CSV File is Empty** | Data is stuck in the Python memory buffer. | You must close the `stream_viewer2.py` script using **Ctrl+C**. This forces Python to "flush" the remaining data from RAM to the disk. |
+| **CSV File is Empty** | Telemetry stream never connected or is offline. | Confirm `ex3_stream_viewer2.py` is connected to Port 5001; this script flushes each row immediately. |
 | **40195: Limit Error** | Too many connection attempts/retries. | The background task has exceeded its retry limit. On the FlexPendant, select all tasks and tap **"PP to Main"**, then press **Play**. |
 | **41574: Socket Error** | Socket used before creation. | This occurs if the program pointer was moved manually. Perform a **"PP to Main"** reset to re-initialize the socket handlers. |
 | **Log: "Connection Refused"** | Robot task is not in a listening state. | Ensure the yellow Program Pointer in **T_BACK** is sitting on the `SocketAccept` line. If not, reset and play. |
