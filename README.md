@@ -2,6 +2,9 @@
 
 # Lab Guide: Remote Control and Telemetry of ABB GoFa
 
+## Prereqs
+Robot powered on, E‑Stop accessible, PC connected to the Service Port, and PC IP set to `192.168.125.x`.
+
 ## 0. RobotStudio and Controller Setup
 
 Before executing any code, ensure the hardware and software environments are synchronized. This setup allows your PC to communicate with the ABB OmniCore controller over the standard Service Port.
@@ -129,6 +132,8 @@ To enable simultaneous motion and data streaming in a project that only contains
 | **Logic** | Request / Response | Continuous Stream |
 | **Safety** | Software Bounds Applied | Read-Only |
 
+Expected telemetry packet example: `500.25,0.00,620.10|-0.12,15.44,-10.02,0.00,45.00,0.00`
+
 ---
 
 ### 3. Communication Flow
@@ -169,6 +174,7 @@ To ensure synchronization between the ABB controller and the Python clients, and
    * `ex3_testsocket2.py`:
        * **Function:** Establishes the command connection to **Port 5000**.
        * **Output:** Opens the interactive command console, allowing the user to send `[x, y, z]` movement vectors to the GoFa.
+       * **Note:** The telemetry listener thread in this script is commented out; use `ex3_stream_viewer2.py` for the live telemetry stream.
 
 > #### ⚠️ Critical Operational Note
 > **Connection Reset Logic:** If you stop the Python scripts, the robot's sockets may remain in a "half-open" state. To ensure the sockets are properly released and re-bound:
