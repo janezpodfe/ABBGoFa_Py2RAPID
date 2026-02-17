@@ -2,6 +2,12 @@
 
 # Lab Guide: Remote Control and Telemetry of ABB GoFa
 
+## 0. RobotStudio Setup
+Run RobotStudio 2025, connect to robot controller, username `admin`, password `robotics`.
+
+![How to run automatic run on controller](How_to_run_automatic_run_on_controller.png)
+![How to add 2 tasks to robot controller](How_to_add_2_tasks_to_robot_controller.PNG)
+
 ## 1. Simple example (example 1)
 
 **Understanding the Command Logic (T_ROB1)**: 
