@@ -239,3 +239,8 @@ After the motion is complete (`fine` stop point), the robot captures its new sta
 
 > #### 💡 Tip
 > If the live telemetry stops updating but the robot is still moving, check the **Terminal 1** window. If you see a "Socket Closed" message, it means the background task encountered an error. Simply restart the Python script; the RAPID code is designed to automatically reset the server and wait for you.
+
+---
+
+### Note on Example 2 Code
+The `ex2_` code shown in this repository are partial snippets for demonstration and may omit setup/cleanup or error-handling details.
